@@ -183,7 +183,6 @@ int main(void)
         /* Check for server shutdown command */
         if (strncmp(buff, "shutdown", 8) == 0) {
             printf("Shutdown command issued!\n");
-            server_Cleanup(sockfd, ctx, ssl);
             shutdown = 1;
         }
 

@@ -285,6 +285,11 @@
     #endif
 #endif
 
+#if defined(WOLFSSL_RENESAS_RA6M3G)
+    /* settings in user_settings.h */
+    #include <errno.h>
+#endif
+
 #if defined(HAVE_LWIP_NATIVE) /* using LwIP native TCP socket */
     #define WOLFSSL_LWIP
     #define NO_WRITEV

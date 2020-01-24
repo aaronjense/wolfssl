@@ -2283,8 +2283,8 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
         }
     #endif /* end WOLFSSL_ESPWROOM32 */
 
-#elif defined(WOLFSSL_RENESAS_RA6M3G)
-
+#elif defined(WOLFSSL_RENESAS_RA6M3G_SCE)
+    #include "hw_sce_trng_private.h"
     int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
     {
         word32 len;

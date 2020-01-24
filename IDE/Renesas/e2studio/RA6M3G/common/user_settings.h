@@ -21,6 +21,9 @@
 #ifndef USER_SETTINGS_H_
 #define USER_SETTINGS_H_
 
+/* Renesas Secure Cryptography Engine */
+//#define WOLFSSL_RENESAS_RA6M3G_SCE
+
 /* Temporary defines. Not suitable for production. */
 #define WOLFSSL_GENSEED_FORTEST /* Warning: define your own seed gen */
 /* End temporary defines */

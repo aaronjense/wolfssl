@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#include "hw_sce_common.h"
+#include "common/hw_sce_common.h"
 
 /* Public Functions */
 void ra6m3g_init(void);

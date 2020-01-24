@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<raConfiguration version="4">
+<raConfiguration version="5">
   <generalSettings>
     <option key="#Board#" value="board.ra6m3gek"/>
     <option key="CPU" value="RA6M3"/>
@@ -179,6 +179,7 @@
       <originalPack>Amazon.AWS.0.8.0.pack</originalPack>
     </component>
   </raComponentSelection>
+  <raElcConfiguration/>
   <raIcuConfiguration/>
   <raModuleConfiguration>
     <module id="module.driver.ioport_on_ioport.0">

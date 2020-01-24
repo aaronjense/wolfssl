@@ -2283,6 +2283,35 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
         }
     #endif /* end WOLFSSL_ESPWROOM32 */
 
+#elif defined(WOLFSSL_RENESAS_RA6M3G)
+
+    int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
+    {
+        word32 len;
+        int ret;
+        word32* buffer[4] = {0};
+        (void)os;
+
+        while (sz > 0) {
+
+            len = sizeof(buffer);
+
+            if (sz < len) {
+                len = sz;
+            }
+
+            ret = (word32) HW_SCE_RNG_Read(buffer);
+            if(ret == FSP_SUCCESS) {
+                XMEMCPY(output, &buffer, len);
+                output += len;
+                sz -= len;
+            } else
+                return ret;
+        }
+
+        return ret;
+    }
+
 #elif defined(WOLFSSL_RENESAS_TSIP)
 #if defined(WOLFSSL_RENESA_TSIP_IAREWRX)
     #include "r_bsp/mcu/all/r_rx_compiler.h"

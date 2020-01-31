@@ -446,6 +446,11 @@
 			<locationURI>PARENT-5-PROJECT_LOC/wolfcrypt/src/port/Renesas/README.md</locationURI>
 		</link>
 		<link>
+			<name>wolfcrypt/port/Renesas/renesas_hw_sce.c</name>
+			<type>1</type>
+			<locationURI>PARENT-5-PROJECT_LOC/wolfcrypt/src/port/Renesas/renesas_hw_sce.c</locationURI>
+		</link>
+		<link>
 			<name>wolfcrypt/port/Renesas/renesas_tsip_aes.c</name>
 			<type>1</type>
 			<locationURI>PARENT-5-PROJECT_LOC/wolfcrypt/src/port/Renesas/renesas_tsip_aes.c</locationURI>

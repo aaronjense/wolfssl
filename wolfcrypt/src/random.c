@@ -575,9 +575,11 @@ static int Hash_DRBG_Generate(DRBG* drbg, byte* out, word32 outSz)
         #else
             ret = wc_InitSha256(sha);
         #endif
-            if (ret == 0)
+            if (ret == 0) {
 #endif
                 ret = wc_Sha256Update(sha, &type, sizeof(type));
+
+            }
             if (ret == 0)
                 ret = wc_Sha256Update(sha, drbg->V, sizeof(drbg->V));
             if (ret == 0)

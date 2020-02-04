@@ -21,10 +21,12 @@
 #include <wolfssl/wolfcrypt/settings.h>
 #include "wolfcrypt/benchmark/benchmark.h"
 #include "common/util.h"
+#include "wolfssl/wolfcrypt/port/Renesas/renesas_hw_sce.h"
 
 void wolfssl_thread_entry(void *pvParameters) {
     FSP_PARAMETER_NOT_USED(pvParameters);
     initialise_monitor_handles();
+    renesas_hw_sce_init();
     benchmark_test(0);
     while (1);
 }

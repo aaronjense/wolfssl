@@ -6564,7 +6564,28 @@ int aes_test(void)
 #endif
 
     XMEMSET(cipher, 0, AES_BLOCK_SIZE * 4);
+
+    printf("\n\n");
+    printf("Before aes->reg: \n");
+    for (int i = 0; i < AES_BLOCK_SIZE / sizeof(word32); i++) {
+    	printf("%X ", enc.reg[i]);
+    }
+    printf("\n\n");
+
     ret = wc_AesCbcEncrypt(&enc, cipher, msg, AES_BLOCK_SIZE);
+
+    printf("After aes->reg: \n");
+    for (int i = 0; i < AES_BLOCK_SIZE / sizeof(word32); i++) {
+    	printf("%X ", enc.reg[i]);
+    }
+    printf("\n\n");
+
+    printf("Encrypt Out: \n\n");
+    for (int i = 0; i < XSTRLEN(cipher); i++) {
+    	printf("%X ", cipher[i]);
+    }
+    printf("\n\n");
+
 #if defined(WOLFSSL_ASYNC_CRYPT)
     ret = wc_AsyncWait(ret, &enc.asyncDev, WC_ASYNC_FLAG_NONE);
 #endif

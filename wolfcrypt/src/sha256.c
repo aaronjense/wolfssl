@@ -544,6 +544,29 @@ static int InitSha256(wc_Sha256* sha256)
 #elif defined(WOLFSSL_DEVCRYPTO_HASH)
     /* implemented in wolfcrypt/src/port/devcrypto/devcrypt_hash.c */
 
+#elif defined(WOLFSSL_SCE) && !defined(WOLFSSL_SCE_NO_HASH)
+	#include "wolfssl/wolfcrypt/port/Renesas/renesas_hw_sce.h"
+
+    #define XTRANSFORM(S, D) renesas_sce_Sha256Transform((S), (D))
+
+    int wc_InitSha256_ex(wc_Sha256* sha256, void* heap, int devId)
+    {
+        int ret = 0;
+        if (sha256 == NULL)
+            return BAD_FUNC_ARG;
+
+        sha256->heap = heap;
+
+        ret = InitSha256(sha256);
+        if (ret != 0)
+            return ret;
+
+        (void)devId;
+
+        return ret;
+    }
+
+
 #elif defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
     !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
 

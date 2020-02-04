@@ -21,6 +21,8 @@
 #ifndef USER_SETTINGS_H_
 #define USER_SETTINGS_H_
 
+#define WOLFSSL_SCE
+//#define WOLFSSL_AES_DIRECT
 /* Temporary defines. Not suitable for production. */
 #define WOLFSSL_GENSEED_FORTEST /* Warning: define your own seed gen */
 /* End temporary defines */
@@ -53,6 +55,7 @@
 #define HAVE_OCSP
 #define HAVE_AESGCM
 #define HAVE_ONE_TIME_AUTH
+#define HAVE_AES_ECB
 
 /* Non-Fast Math may call realloc. This project has no realloc support */
 #define USE_FAST_MATH

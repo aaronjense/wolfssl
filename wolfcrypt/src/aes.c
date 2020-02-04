@@ -608,6 +608,25 @@
     }
     #endif
 
+#elif defined(WOLFSSL_SCE)
+	#include "wolfssl/wolfcrypt/port/Renesas/renesas_hw_sce.h"
+
+    static int wc_AesEncrypt(Aes* aes, const byte* inBlock, byte* outBlock)
+    {
+        int ret;
+        ret = wc_RenesasAesEcbEncrypt(aes, outBlock, inBlock, AES_BLOCK_SIZE);
+        return ret;
+    }
+
+    #ifdef HAVE_AES_DECRYPT
+    static int wc_AesDecrypt(Aes* aes, const byte* inBlock, byte* outBlock)
+    {
+        int ret;
+        ret = wc_RenesasAesEcbEncrypt(aes, outBlock, inBlock, AES_BLOCK_SIZE);
+        return ret;
+    }
+    #endif /* HAVE_AES_DECRYPT */
+
 #elif defined(WOLFSSL_AESNI)
 
     #define NEED_AES_TABLES
@@ -1398,6 +1417,7 @@ static WC_INLINE word32 PreFetchTe(void)
     return x;
 }
 
+
 /* Software AES - ECB Encrypt */
 static void wc_AesEncrypt(Aes* aes, const byte* inBlock, byte* outBlock)
 {
@@ -1585,6 +1605,7 @@ static void wc_AesEncrypt(Aes* aes, const byte* inBlock, byte* outBlock)
 
 }
 #endif /* HAVE_AES_CBC || WOLFSSL_AES_DIRECT || HAVE_AESGCM */
+
 
 #if defined(HAVE_AES_DECRYPT)
 #if (defined(HAVE_AES_CBC) && !defined(WOLFSSL_DEVCRYPTO_CBC)) || \
@@ -2478,6 +2499,18 @@ int wc_AesSetIV(Aes* aes, const byte* iv)
         }
         #endif /* HAVE_AES_DECRYPT */
 
+	#elif defined(WOLFSSL_SCE)
+        /* Allow direct access to one block encrypt */
+		void wc_AesEncryptDirect(Aes* aes, byte* out, const byte* in)
+		{
+			wc_RenesasAesEcbEncrypt(aes, out, in, AES_BLOCK_SIZE);
+		}
+
+		void wc_AesDecryptDirect(Aes* aes, byte* out, const byte* in)
+		{
+			wc_RenesasAesEcbDecrypt(aes, out, in, AES_BLOCK_SIZE);
+		}
+
     #else
         /* Allow direct access to one block encrypt */
         void wc_AesEncryptDirect(Aes* aes, byte* out, const byte* in)
@@ -3056,7 +3089,7 @@ int wc_AesSetIV(Aes* aes, const byte* iv)
 
     int wc_AesCbcEncrypt(Aes* aes, byte* out, const byte* in, word32 sz)
     {
-        return wc_esp32AesCbcEncrypt(aes, out, in, sz);
+        return  (aes, out, in, sz);
     }
     int wc_AesCbcDecrypt(Aes* aes, byte* out, const byte* in, word32 sz)
     {
@@ -3079,6 +3112,20 @@ int wc_AesSetIV(Aes* aes, const byte* iv)
 
 #elif defined(WOLFSSL_DEVCRYPTO_CBC)
     /* implemented in wolfcrypt/src/port/devcrypt/devcrypto_aes.c */
+
+//#elif defined(WOLFSSL_SCE) && defined(WOLFSSL_RENESAS_RA6M3G)
+//	#include "wolfssl/wolfcrypt/port/Renesas/renesas_hw_sce.h"
+//
+//    int wc_AesCbcEncrypt(Aes* aes, byte* out, const byte* in, word32 sz) {
+//        return wc_RenesasAesCbcEncrypt(aes, out, in, sz);
+//    }
+//
+//	#ifdef HAVE_AES_DECRYPT
+//	int wc_AesCbcDecrypt(Aes* aes, byte* out, const byte* in, word32 sz)
+//	{
+//		return wc_RenesasAesCbcDecrypt(aes, out, in, sz);
+//	}
+//	#endif /* HAVE_AES_DECRYPT */
 
 #else
 
@@ -3166,6 +3213,7 @@ int wc_AesSetIV(Aes* aes, const byte* iv)
             return 0;
         }
     #endif
+
 
         while (blocks--) {
             xorbuf((byte*)aes->reg, in, AES_BLOCK_SIZE);
@@ -5715,6 +5763,12 @@ int AES_GCM_encrypt_C(Aes* aes, byte* out, const byte* in, word32 sz,
         /* reset number of blocks and then do encryption */
         blocks = sz / AES_BLOCK_SIZE;
         wc_AesEcbEncrypt(aes, out, out, AES_BLOCK_SIZE * blocks);
+//        printf("Aes ECB Encrypt 1\n");
+//        for (int i = 0; i < sz; i++) {
+//        	printf("%X ", out[i]);
+//        }
+//        printf("\n");
+
         xorbuf(out, p, AES_BLOCK_SIZE * blocks);
         p += AES_BLOCK_SIZE * blocks;
     }
@@ -5725,6 +5779,12 @@ int AES_GCM_encrypt_C(Aes* aes, byte* out, const byte* in, word32 sz,
         IncrementGcmCounter(ctr);
     #if !defined(WOLFSSL_PIC32MZ_CRYPT)
         wc_AesEncrypt(aes, ctr, scratch);
+
+//        printf("AesEncrypt 1\n");
+//        for (int i = 0; i < XSTRLEN(scratch); i++) {
+//        	printf("%X ", scratch[i]);
+//        }
+
         xorbuf(scratch, p, AES_BLOCK_SIZE);
         XMEMCPY(c, scratch, AES_BLOCK_SIZE);
     #endif
@@ -7033,6 +7093,19 @@ int wc_AesGetKeySize(Aes* aes, word32* keySize)
 
 #elif defined(WOLFSSL_DEVCRYPTO_AES)
     /* implemented in wolfcrypt/src/port/devcrypt/devcrypto_aes.c */
+
+#elif defined(WOLFSSL_SCE) && defined(WOLFSSL_RENESAS_RA6M3G)
+
+    int wc_AesEcbEncrypt(Aes* aes, byte* out, const byte* in, word32 sz) {
+        return wc_RenesasAesEcbEncrypt(aes, out, in, sz);
+    }
+
+	#ifdef HAVE_AES_DECRYPT
+	int wc_AesEcbDecrypt(Aes* aes, byte* out, const byte* in, word32 sz)
+	{
+		return wc_RenesasAesEcbDecrypt(aes, out, in, sz);
+	}
+	#endif /* HAVE_AES_DECRYPT */
 
 #else
 

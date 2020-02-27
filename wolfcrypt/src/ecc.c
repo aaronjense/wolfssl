@@ -141,6 +141,10 @@ ECC Curve Sizes:
     #include <wolfssl/wolfcrypt/port/st/stm32.h>
 #endif
 
+#if defined(WOLFSSL_SCE) && defined(WOLFSSL_RENESAS_RA6M3G)
+	#include <wolfssl/wolfcrypt/port/Renesas/renesas_sce_ra6m3g.h>
+#endif
+
 #ifdef WOLFSSL_SP_MATH
     #define GEN_MEM_ERR MP_MEM
 #elif defined(USE_FAST_MATH)
@@ -4160,6 +4164,8 @@ int wc_ecc_make_key_ex(WC_RNG* rng, int keysize, ecc_key* key, int curve_id)
         err = mp_read_unsigned_bin(&key->k, ucompressed_key, raw_size);
     }
 
+#elif defined(WOLFSSL_SCE) && defined(WOLFSSL_RENESAS_RA6M3G)
+    err = wc_Renesas_EccGenerateKey(key);
 #else
 
 #ifdef WOLFSSL_HAVE_SP_ECC
@@ -4701,6 +4707,8 @@ int wc_ecc_sign_hash(const byte* in, word32 inlen, byte* out, word32 *outlen,
 /* hardware crypto */
 #if defined(WOLFSSL_ATECC508A) || defined(PLUTON_CRYPTO_ECC) || defined(WOLFSSL_CRYPTOCELL)
     err = wc_ecc_sign_hash_hw(in, inlen, r, s, out, outlen, rng, key);
+#elif defined(WOLFSSL_SCE) && defined(WOLFSSL_RENESAS_RA6M3G)
+    err = wc_Renesas_EccGenerateSign(key, in, inlen, r, s);
 #else
     err = wc_ecc_sign_hash_ex(in, inlen, rng, key, r, s);
 #endif
@@ -5723,6 +5731,8 @@ int wc_ecc_verify_hash_ex(mp_int *r, mp_int *s, const byte* hash,
    CRYS_ECDSA_VerifyUserContext_t sigCtxTemp;
    word32 msgLenInBytes = hashlen;
    CRYS_ECPKI_HASH_OpMode_t hash_mode;
+#elif defined(WOLFSSL_SCE) && defined(WOLFSSL_RENESAS_RA6M3G)
+    /* no extra variables */
 #elif !defined(WOLFSSL_SP_MATH) || defined(FREESCALE_LTC_ECC)
    int          did_init = 0;
    ecc_point    *mG = NULL, *mQ = NULL;
@@ -5830,6 +5840,18 @@ int wc_ecc_verify_hash_ex(mp_int *r, mp_int *s, const byte* hash,
    }
    /* valid signature if we get to this point */
    *res = 1;
+#elif defined(WOLFSSL_SCE) && defined(WOLFSSL_RENESAS_RA6M3G)
+   /* checking if private key with no public part */
+   if (key->type == ECC_PRIVATEKEY_ONLY) {
+        WOLFSSL_MSG("Verify called with private key, generating public part\n");
+        err = wc_ecc_make_pub_ex(key, NULL, NULL);
+        if (err != MP_OKAY) {
+            WOLFSSL_MSG("Unable to extract public key");
+            return err;
+        }
+   }
+   err = wc_Renesas_EccVerifySign(key, r, s, hash, hashlen, res);
+
 #else
   /* checking if private key with no public part */
   if (key->type == ECC_PRIVATEKEY_ONLY) {

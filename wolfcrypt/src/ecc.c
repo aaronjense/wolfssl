@@ -142,7 +142,7 @@ ECC Curve Sizes:
 #endif
 
 #if defined(WOLFSSL_SCE) && defined(WOLFSSL_RENESAS_RA6M3G)
-	#include <wolfssl/wolfcrypt/port/Renesas/renesas_sce_ra6m3g.h>
+    #include <wolfssl/wolfcrypt/port/Renesas/renesas_sce_ra6m3g.h>
 #endif
 
 #ifdef WOLFSSL_SP_MATH
@@ -2477,12 +2477,18 @@ done:
 static int normal_ecc_mulmod(mp_int* k, ecc_point *G, ecc_point *R,
                   mp_int* a, mp_int* modulus, int map,
                   void* heap)
+{
+#elif defined(WOLFSSL_SCE) && defined(WOLFSSL_RENESAS_RA6M3G)
+static int wc_ecc_mulmod_soft(mp_int* k, ecc_point *G, ecc_point *R,
+                  mp_int* a, mp_int* modulus, int map,
+                  void* heap)
+{
 #else
 int wc_ecc_mulmod_ex(mp_int* k, ecc_point *G, ecc_point *R,
                   mp_int* a, mp_int* modulus, int map,
                   void* heap)
-#endif
 {
+#endif
 #ifndef WOLFSSL_SP_MATH
 #ifndef ECC_TIMING_RESISTANT
    /* size of sliding window, don't change this! */
@@ -2943,10 +2949,48 @@ exit:
    return sp_ecc_mulmod_256(k, G, R, map, heap);
 #endif
 }
-
 #endif /* !FP_ECC || !WOLFSSL_SP_MATH */
-
 #endif /* !FREESCALE_LTC_ECC && !WOLFSSL_STM32_PKA */
+
+#if defined(WOLFSSL_SCE) && defined(WOLFSSL_RENESAS_RA6M3G)
+int wc_ecc_mulmod_ex(mp_int* k, ecc_point *G, ecc_point *R,
+                     mp_int* a, mp_int* modulus, int map,
+                     void* heap)
+{
+    (void)heap;
+    int i;
+    int ret = -1;
+    char Af[48] = {0};
+    mp_int b[1];
+
+    /* Hardware needs Bf, but standard mulmod interface does not include */
+    /* Convert mp_int a to char* Af */
+    if (a != NULL)
+        ret = mp_toradix(a, Af, 16);
+
+    /* Try to find the Bf corresponding to Af */
+    if (ret == MP_OKAY &&  mp_init(b) == MP_OKAY) {
+        for (i = 0; ecc_sets[i].size != 0; i++) {
+            if (XSTRNCMP(ecc_sets[i].Af, Af, XSTRLEN(Af)) == 0) {
+                ret = mp_read_radix(b, ecc_sets[i].Bf, MP_RADIX_HEX);
+                break;
+            }
+        }
+    }
+
+    /* Bf found and converted to mp_int b */
+    if (ret == MP_OKAY)
+        ret = wc_Renesas_Ecc256Mulmod(k, G, R, a, b, modulus, map);
+
+    /* Hardware may fail on infinity tests, use software as backup */
+    if (ret == WC_HW_E)
+        ret = wc_ecc_mulmod_soft(k, G, R, a, modulus, map, heap);
+
+    mp_clear(b);
+
+    return ret;
+}
+#endif /* WOLFSSL_SCE && WOLFSSL_RENESAS_RA6M3G */
 
 /** ECC Fixed Point mulmod global
     k        The multiplicand

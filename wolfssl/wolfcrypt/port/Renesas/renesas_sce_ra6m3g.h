@@ -29,6 +29,8 @@ int wc_Renesas_EccGenerateSign(ecc_key* key, const byte* hash, const word32 hash
                                mp_int* r, mp_int* s);
 int wc_Renesas_EccVerifySign(ecc_key* key, mp_int* r, mp_int* s,
                              const byte* hash, const word32 hashlen, int* res);
+int wc_Renesas_Ecc256Mulmod(mp_int* k, ecc_point *G, ecc_point *R,
+							mp_int* a, mp_int* b, mp_int* modulus, int map);
 int wc_renesas_EccFormatArgs(const ecc_key* key, byte* domain, byte* gxy);
 
 #ifdef __cplusplus

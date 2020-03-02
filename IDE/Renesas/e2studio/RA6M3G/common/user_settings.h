@@ -86,8 +86,10 @@
     /* Set 256 and 384 curves only */
     #define ECC_USER_CURVES
     #define HAVE_ECC384
-    /* VALIDATE_ECC_IMPORT can be removed. This is an extra check */
+    /* VALIDATE_ECC_IMPORT can be removed. This is for extra tests. */
     #define WOLFSSL_VALIDATE_ECC_IMPORT
+    /* ECC_KEY_EXPORT can be removed. This is for extra tests. */
+    #define HAVE_ECC_KEY_EXPORT
     /* These tests have hard-coded vector parameters that aren't supported
      * by the hardware. These would need to be changed to have the message
      * digest exactly the size of the ECC key.

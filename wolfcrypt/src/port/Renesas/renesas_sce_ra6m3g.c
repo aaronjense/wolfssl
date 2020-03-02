@@ -654,6 +654,95 @@ int wc_Renesas_EccVerifySign(ecc_key* key, mp_int* r, mp_int* s,
     return ret;
 }
 
+
+int wc_Renesas_Ecc256Mulmod(mp_int* k, ecc_point *G, ecc_point *R,
+                            mp_int* a, mp_int* b, mp_int* modulus, int map) {
+
+    word32 keySize = 0;
+    int ret = MP_OKAY;
+    uint8_t k_bin[ECC384_KEYSIZE]    = {0};
+    uint8_t g_bin[2*ECC384_KEYSIZE]  = {0}; /* HW In:  (Gx || Gy) / (Px || Py) */
+    uint8_t r_bin[2*ECC384_KEYSIZE]  = {0}; /* HW Out: (Rx || Ry) */
+    uint8_t domain[3*ECC384_KEYSIZE] = {0}; /* (a || b || modulus) */
+
+    if (k == NULL || G == NULL || R == NULL ||
+            a == NULL || b == NULL || modulus == NULL)
+    {
+        WOLFSSL_MSG("NULL Input.");
+        ret = BAD_FUNC_ARG;
+    }
+
+    if (k->dp == NULL || G->x == NULL || G->y == NULL
+            || R->x == NULL || R->y == NULL ||
+            (k->used != G->x->used) ||
+            (k->used != modulus->used) ||
+            (k->used != a->used) ||
+            (k->used != b->used))
+    {
+        WOLFSSL_MSG("Invalid input sizes.");
+        ret = BAD_FUNC_ARG;
+    }
+
+    /* Build up key parameters into format expected by hardware */
+    /* MP_OKAY if successful */
+    if (ret == MP_OKAY) {
+        keySize = (word32) k->used * 4;
+        /* mp_int k to raw binary */
+        if (ret == MP_OKAY)
+            ret = mp_to_unsigned_bin(k, k_bin);
+        /* Build domain == (a || b || modulus) */
+        if (ret == MP_OKAY)
+            ret = mp_to_unsigned_bin(a, &domain[0]);
+        if (ret == MP_OKAY)
+            ret = mp_to_unsigned_bin(b, &domain[1*keySize]);
+        if (ret == MP_OKAY)
+            ret = mp_to_unsigned_bin(modulus, &domain[2*keySize]);
+        /* Build g_bin = (Gx || Gy) */
+        if (ret == MP_OKAY)
+            ret = mp_to_unsigned_bin(G->x, &g_bin[0]);
+        if (ret == MP_OKAY)
+            ret = mp_to_unsigned_bin(G->y, &g_bin[keySize]);
+    }
+
+    /* Perform Hardware Multiplication */
+    if (ret == MP_OKAY) {
+        switch (keySize) {
+         case ECC256_KEYSIZE:
+            ret = (int) HW_SCE_ECC_256ScalarMultiplication((const uint32_t*) domain,
+                                                           (const uint32_t*) k_bin,
+                                                           (const uint32_t*) g_bin,
+                                                           (uint32_t*)       r_bin);
+             break;
+         case ECC384_KEYSIZE:
+            ret = (int) HW_SCE_ECC_384ScalarMultiplication((const uint32_t*) domain,
+                                                           (const uint32_t*) k_bin,
+                                                           (const uint32_t*) g_bin,
+                                                           (uint32_t*)       r_bin);
+             break;
+         default:
+             WOLFSSL_MSG("Unsupported ECC Curve.");
+             ret = ECC_CURVE_OID_E;
+             break;
+        }
+
+        if (ret == FSP_SUCCESS) {
+            mp_read_unsigned_bin(R->x, &r_bin[0], (int) keySize);
+            mp_read_unsigned_bin(R->y, &r_bin[keySize], (int) keySize);
+            if (map == 1) {
+                mp_copy(G->z, R->z);
+            }
+            ret = MP_OKAY;
+        } else {
+            WOLFSSL_MSG("ECC Sign failed.");
+            if (ret != ECC_CURVE_OID_E)
+                ret = WC_HW_E;
+        }
+    }
+
+    return ret;
+}
+
+
 /*
    Helper function for Renesas ECC hardware functions.
    Formats ECC domain and other parameters to be consumed by hardware.
